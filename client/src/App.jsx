@@ -36,6 +36,7 @@ import Analytics from "./pages/AdminDashboard/Analytics";
 import Settings from "./pages/AdminDashboard/Settings";
 
 import EditEvent from "./pages/NGODashboard/EditEvent";
+import NGOApplications from "./pages/NGODashboard/NGOApplications";
 
 function App() {
   return (
@@ -72,7 +73,7 @@ function App() {
       >
         <Route path="/ngo" element={<NGODashboard />} />
         <Route path="/ngo/events" element={<Events />} />
-        <Route path="/ngo/applications" element={<Applications />} />
+        <Route path="/ngo/applications" element={<NGOApplications />} />
         <Route path="/ngo/attendance" element={<Attendance />} />
         <Route path="/ngo/certificates" element={<Certificates />} />
         <Route path="/ngo/profile" element={<Profile />} />

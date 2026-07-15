@@ -4,10 +4,8 @@ const Event = require("../models/Event");
 // Volunteer Apply for Event
 const applyForEvent = async (req, res) => {
   try {
-
     const eventId = req.params.eventId;
 
-    // Check if event exists
     const event = await Event.findById(eventId);
 
     if (!event) {
@@ -17,7 +15,6 @@ const applyForEvent = async (req, res) => {
       });
     }
 
-    // Check duplicate application
     const alreadyApplied = await Application.findOne({
       volunteer: req.user._id,
       event: eventId,
@@ -30,7 +27,6 @@ const applyForEvent = async (req, res) => {
       });
     }
 
-    // Create application
     const application = await Application.create({
       volunteer: req.user._id,
       event: eventId,
@@ -43,15 +39,14 @@ const applyForEvent = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-// Get My Applications
+
+// Volunteer - My Applications
 const getMyApplications = async (req, res) => {
   try {
     const applications = await Application.find({
@@ -71,11 +66,10 @@ const getMyApplications = async (req, res) => {
     });
   }
 };
-// NGO - Get All Applicants for an Event
 
+// NGO - All Applicants for ONE Event
 const getApplicantsForEvent = async (req, res) => {
   try {
-
     const eventId = req.params.eventId;
 
     const event = await Event.findById(eventId);
@@ -87,7 +81,6 @@ const getApplicantsForEvent = async (req, res) => {
       });
     }
 
-    // Make sure this NGO owns the event
     if (event.organizer.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -114,11 +107,39 @@ const getApplicantsForEvent = async (req, res) => {
     });
   }
 };
-// Accept / Reject Application
 
-const updateApplicationStatus = async (req, res) => {
+// ⭐ NEW - NGO All Applications
+const getNGOApplications = async (req, res) => {
   try {
 
+    const events = await Event.find({
+      organizer: req.user._id,
+    });
+
+    const eventIds = events.map(event => event._id);
+
+    const applications = await Application.find({
+      event: { $in: eventIds }
+    })
+      .populate("volunteer", "-password")
+      .populate("event");
+
+    res.status(200).json({
+      success: true,
+      applications,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// NGO - Approve / Reject
+const updateApplicationStatus = async (req, res) => {
+  try {
     const { status } = req.body;
 
     const application = await Application.findById(req.params.applicationId);
@@ -130,7 +151,11 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    const validStatuses = ["Pending", "Approved", "Rejected"];
+    const validStatuses = [
+      "Pending",
+      "Approved",
+      "Rejected",
+    ];
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -145,17 +170,15 @@ const updateApplicationStatus = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Application status updated successfully",
+      message: "Application Updated",
       application,
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -163,5 +186,6 @@ module.exports = {
   applyForEvent,
   getMyApplications,
   getApplicantsForEvent,
+  getNGOApplications,
   updateApplicationStatus,
 };

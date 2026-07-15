@@ -1,34 +1,50 @@
 const express = require("express");
 const router = express.Router();
 
-const { applyForEvent, getMyApplications, getApplicantsForEvent, updateApplicationStatus } = require("../controllers/applicationController");
+const {
+  applyForEvent,
+  getMyApplications,
+  getApplicantsForEvent,
+  getNGOApplications,
+  updateApplicationStatus,
+} = require("../controllers/applicationController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
-// Volunteer applies for an event
+// Volunteer applies
 router.post(
   "/apply/:eventId",
   protect,
   authorizeRoles("volunteer"),
   applyForEvent
-  
 );
-// Get my applications
+
+// Volunteer applications
 router.get(
   "/my",
   protect,
   authorizeRoles("volunteer"),
   getMyApplications
 );
-// NGO - Get all applicants for an event
+
+// NGO - Applicants for one event
 router.get(
   "/event/:eventId",
   protect,
   authorizeRoles("ngo"),
   getApplicantsForEvent
 );
-// NGO - Update application status
+
+// ⭐ NGO - All applications for all my events
+router.get(
+  "/ngo",
+  protect,
+  authorizeRoles("ngo"),
+  getNGOApplications
+);
+
+// NGO - Approve / Reject
 router.put(
   "/:applicationId/status",
   protect,
