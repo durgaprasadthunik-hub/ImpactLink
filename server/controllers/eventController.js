@@ -9,6 +9,7 @@ const createEvent = async (req, res) => {
       location,
       date,
       requiredSkills,
+      interests = [],
       maxVolunteers,
     } = req.body;
 
@@ -28,68 +29,71 @@ const createEvent = async (req, res) => {
       message: "Event Created Successfully",
       event,
     });
-
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
 // Get All Events
 const getAllEvents = async (req, res) => {
   try {
-
-    const events = await Event.find();
+    const events = await Event.find().populate(
+      "organizer",
+      "fullName email"
+    );
 
     res.status(200).json({
       success: true,
       count: events.length,
       events,
     });
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-// Get Event By ID
 
+// Get Event By ID
 const getEventById = async (req, res) => {
   try {
-
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id).populate(
+      "organizer",
+      "fullName email"
+    );
 
     if (!event) {
       return res.status(404).json({
         success: false,
-        message: "Event not found"
+        message: "Event not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      event
+      event,
     });
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
-
   }
 };
-// Update Event
 
+// Update Event
 const updateEvent = async (req, res) => {
   try {
-
     const event = await Event.findById(req.params.id);
 
     if (!event) {
@@ -113,21 +117,19 @@ const updateEvent = async (req, res) => {
       message: "Event Updated Successfully",
       event: updatedEvent,
     });
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-// Delete Event
 
+// Delete Event
 const deleteEvent = async (req, res) => {
   try {
-
     const event = await Event.findById(req.params.id);
 
     if (!event) {
@@ -143,14 +145,13 @@ const deleteEvent = async (req, res) => {
       success: true,
       message: "Event Deleted Successfully",
     });
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -159,5 +160,5 @@ module.exports = {
   getAllEvents,
   getEventById,
   updateEvent,
-  deleteEvent
+  deleteEvent,
 };
