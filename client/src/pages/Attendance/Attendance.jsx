@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
-import AttendanceCard from "../../components/AttendanceCard/AttendanceCard";
+import { toast } from "react-toastify";
 
 function Attendance() {
   const [events, setEvents] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -30,19 +31,36 @@ function Attendance() {
 
   const fetchVolunteers = async (eventId) => {
     try {
+      setSelectedEvent(eventId);
+
       const response = await api.get(
         `/applications/event/${eventId}`
       );
 
       const approvedApplications =
         response.data.applications.filter(
-          (application) =>
-            application.status === "Approved"
+          (application) => application.status === "Approved"
         );
 
       setApplications(approvedApplications);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const markAttendance = async (applicationId) => {
+    try {
+      await api.put(
+        `/applications/${applicationId}/attendance`
+      );
+
+      toast.success("Attendance marked successfully");
+
+      fetchVolunteers(selectedEvent);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to mark attendance"
+      );
     }
   };
 
@@ -83,16 +101,57 @@ function Attendance() {
       )}
 
       {applications.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-6 mt-10">
-          {applications.map((application) => (
-            <AttendanceCard
-              key={application._id}
-              application={application}
-              refresh={() =>
-                fetchVolunteers(application.event._id)
-              }
-            />
-          ))}
+        <div className="mt-10 bg-white rounded-xl shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-blue-700 text-white">
+              <tr>
+                <th className="p-4 text-left">Volunteer</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Attendance</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {applications.map((application) => (
+                <tr
+                  key={application._id}
+                  className="border-b hover:bg-gray-50"
+                >
+                  <td className="p-4">
+                    {application.volunteer.fullName}
+                  </td>
+
+                  <td>
+                    {application.volunteer.email}
+                  </td>
+
+                  <td>
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">
+                      {application.status}
+                    </span>
+                  </td>
+
+                  <td>
+                    {application.attendance ? (
+                      <span className="text-green-600 font-semibold">
+                        Present
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          markAttendance(application._id)
+                        }
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                      >
+                        Mark Present
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
