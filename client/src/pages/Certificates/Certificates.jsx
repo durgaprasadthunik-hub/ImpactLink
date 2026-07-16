@@ -3,7 +3,6 @@ import api from "../../services/api";
 import CertificateCard from "../../components/CertificateCard/CertificateCard";
 
 function Certificates() {
-
   const [events, setEvents] = useState([]);
   const [applications, setApplications] = useState([]);
 
@@ -12,86 +11,90 @@ function Certificates() {
   }, []);
 
   const fetchEvents = async () => {
-  try {
-    const response = await api.get("/events");
+    try {
+      const response = await api.get("/events");
 
-    const user = JSON.parse(localStorage.getItem("user"));
+      const user = JSON.parse(localStorage.getItem("user"));
 
-    setEvents(
-      response.data.events.filter(
-        (event) => event.organizer === user._id
-      )
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
+      const myEvents = response.data.events.filter(
+        (event) =>
+          event.organizer?._id === user._id ||
+          event.organizer === user._id
+      );
+
+      setEvents(myEvents);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const fetchVolunteers = async (eventId) => {
+    try {
+      const response = await api.get(
+        `/applications/event/${eventId}`
+      );
 
-    const response = await api.get(
-      `/applications/event/${eventId}`
-    );
+      const approvedApplications =
+        response.data.applications.filter(
+          (application) =>
+            application.status === "Approved"
+        );
 
-    setApplications(
-      response.data.applications.filter(
-        (application) =>
-          application.status === "Approved"
-      )
-    );
+      setApplications(approvedApplications);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
     <div className="p-10">
-
       <h1 className="text-4xl font-bold mb-8">
         Certificates
       </h1>
 
-      <div className="grid md:grid-cols-2 gap-6">
-
-        {events.map((event) => (
-
-          <div
-            key={event._id}
-            className="bg-white rounded-xl shadow p-6"
-          >
-
-            <h2 className="text-2xl font-bold">
-              {event.title}
-            </h2>
-
-            <button
-              onClick={() =>
-                fetchVolunteers(event._id)
-              }
-              className="mt-5 bg-blue-700 text-white px-5 py-2 rounded-lg"
+      {events.length === 0 ? (
+        <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
+          No events found.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {events.map((event) => (
+            <div
+              key={event._id}
+              className="bg-white rounded-xl shadow p-6"
             >
-              View Volunteers
-            </button>
+              <h2 className="text-2xl font-bold">
+                {event.title}
+              </h2>
 
-          </div>
+              <p className="text-gray-500 mt-2">
+                {event.location}
+              </p>
 
-        ))}
+              <button
+                onClick={() => fetchVolunteers(event._id)}
+                className="mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-lg"
+              >
+                View Volunteers
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 mt-10">
-
-        {applications.map((application) => (
-
-          <CertificateCard
-            key={application._id}
-            application={application}
-            refresh={() =>
-              fetchVolunteers(application.event._id)
-            }
-          />
-
-        ))}
-
-      </div>
-
+      {applications.length > 0 && (
+        <div className="grid md:grid-cols-2 gap-6 mt-10">
+          {applications.map((application) => (
+            <CertificateCard
+              key={application._id}
+              application={application}
+              refresh={() =>
+                fetchVolunteers(application.event._id)
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
